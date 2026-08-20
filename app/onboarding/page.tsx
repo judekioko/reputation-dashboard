@@ -35,7 +35,7 @@ export default function OnboardingPage() {
   return (
     <main className="mx-auto max-w-md px-6 py-16">
       <h1 className="text-2xl font-semibold">Set up your business</h1>
-      <p className="mt-2 text-ink/60">This takes a minute — then you'll connect your Google and Facebook reviews.</p>
+      <p className="mt-2 text-ink/60">This takes a minute — then you&apos;ll connect your Google and Facebook reviews.</p>
 
       <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm">
