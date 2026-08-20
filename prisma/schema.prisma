@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  starter
+  growth
+}
+
+enum Platform {
+  google
+  facebook
+  yelp
+}
+
+enum ReplyStatus {
+  none
+  drafted
+  sent
+}
+
+enum AlertChannel {
+  email
+  sms
+  both
+}
+
+model Account {
+  id                String   @id @default(uuid())
+  clerkUserId       String   @unique
+  businessName      String
+  contactEmail      String
+  contactPhone      String?
+  plan              Plan     @default(starter)
+  stripeCustomerId  String?  @unique
+  createdAt         DateTime @default(now())
+
+  locations   Location[]
+  alertRules  AlertRule[]
+
+  @@map("accounts")
+}
+
+model Location {
+  id        String   @id @default(uuid())
+  accountId String
+  label     String
+  address   String?
+  createdAt DateTime @default(now())
+
+  account Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  sources ReviewSource[]
+
+  @@index([accountId])
+  @@map("locations")
+}
+
+model ReviewSource {
+  id                 String    @id @default(uuid())
+  locationId         String
+  platform           Platform
+  externalLocationId String
+  accessToken        String
+  refreshToken       String?
+  tokenExpiresAt      DateTime?
+  lastSyncedAt       DateTime?
+  createdAt          DateTime  @default(now())
+
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  reviews  Review[]
+
+  @@unique([locationId, platform])
+  @@index([locationId])
+  @@map("review_sources")
+}
+
+model Review {
+  id            String      @id @default(uuid())
+  sourceId      String
+  externalId    String
+  authorName    String
+  rating        Int
+  body          String?
+  postedAt      DateTime
+  replyStatus   ReplyStatus @default(none)
+  createdAt     DateTime    @default(now())
+
+  source ReviewSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  reply  Reply?
+
+  @@unique([sourceId, externalId])
+  @@index([sourceId, rating])
+  @@map("reviews")
+}
+
+model Reply {
+  id         String    @id @default(uuid())
+  reviewId   String    @unique
+  draftText  String
+  sentText   String?
+  sentAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@map("replies")
+}
+
+model AlertRule {
+  id        String       @id @default(uuid())
+  accountId String
+  maxRating Int          @default(2)
+  channel   AlertChannel @default(email)
+  createdAt DateTime     @default(now())
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@map("alert_rules")
+}
